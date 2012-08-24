@@ -60,6 +60,8 @@ public class HorizontalListView extends AdapterView<ListAdapter> {
 	private OnItemLongClickListener mOnItemLongClicked;
 	private boolean mDataChanged = false;
 	
+	private boolean mOnTouchDown2Click = false;
+	private boolean mOnTouchUp2Click = false;
 
 	public HorizontalListView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -289,10 +291,27 @@ public class HorizontalListView extends AdapterView<ListAdapter> {
 		requestLayout();
 	}
 	
+	protected void sendDispatchTouchEvent2Super(MotionEvent ev){
+		dispatchTouchEvent(ev);
+		ev.setAction(MotionEvent.ACTION_UP);
+		dispatchTouchEvent(ev);
+	}
+	
 	@Override
-	public boolean dispatchTouchEvent(MotionEvent ev) {
-		boolean handled = super.dispatchTouchEvent(ev);
+	public boolean dispatchTouchEvent(MotionEvent ev) {	
+		boolean handled = false;
+		if(mOnTouchDown2Click == true){
+			handled = super.dispatchTouchEvent(ev);
+			mOnTouchDown2Click = false;
+		}else{
+			if(mOnTouchUp2Click==true){
+				handled = super.dispatchTouchEvent(ev);
+				mOnTouchUp2Click = false;			
+			}
+		}
+		
 		handled |= mGesture.onTouchEvent(ev);
+		
 		return handled;
 	}
 	
@@ -338,6 +357,10 @@ public class HorizontalListView extends AdapterView<ListAdapter> {
 
 		@Override
 		public boolean onSingleTapConfirmed(MotionEvent e) {
+			mOnTouchDown2Click = true;
+			mOnTouchUp2Click = true;
+			HorizontalListView.this.sendDispatchTouchEvent2Super(e);
+			
 			for(int i=0;i<getChildCount();i++){
 				View child = getChildAt(i);
 				if (isEventWithinView(e, child)) {
